@@ -1,75 +1,96 @@
-body {
-  font-family: Arial, sans-serif;
-  background-color: #f4f4f4;
-  margin: 0;
-  padding: 20px;
-}
+const display = document.querySelector(".display");
+const historyDisplay = document.querySelector("#history");
+const buttons = document.querySelectorAll("button");
+const specialChars = ["%", "*", "/", "-", "+", "="];
+let firstValue = '';
+let operator = '';
+let secondValue = '';
 
-h1 {
-  color: #333;
-  text-align: center;
-  font-size: 2.5rem;
-  margin-bottom: 20px;
-}
+const isNumber = (value) => !isNaN(value) && value.trim() !== '';
 
-.description {
-  color: #555;
-  text-align: center;
-  font-size: 1.2rem;
-  margin-bottom: 20px;
-}
+const updateHistory = () => {
+  if (firstValue && operator && !secondValue) {
+    historyDisplay.textContent = `${firstValue} ${operator}`;
+  } else if (firstValue && operator && secondValue) {
+    historyDisplay.textContent = `${firstValue} ${operator} ${secondValue}`;
+  }
+};
 
-ul {
-  list-style-type: none;
-  padding: 0;
-  max-width: 300px;
-  margin: 0 auto;
-}
+const calculate = (btnValue) => {
+  display.focus();
 
-li {
-  background-color: #e2e2e2;
-  margin: 5px 0;
-  padding: 10px;
-  border-radius: 4px;
-  text-align: center;
-  font-size: 1.2rem;
-}
+  if (btnValue === "AC") {
+    firstValue = '';
+    operator = '';
+    secondValue = '';
+    display.value = '';
+    historyDisplay.textContent = '';
+  } else if (btnValue === "DEL") {
+    if (!operator) {
+      firstValue = firstValue.slice(0, -1);
+      display.value = firstValue;
+    } else {
+      secondValue = secondValue.slice(0, -1);
+      display.value = secondValue;
+    }
+    updateHistory();
+  } else if (btnValue === "=") {
+    if (!isNumber(firstValue) || !isNumber(secondValue) || !operator) {
+      display.value = 'Помилка!';
+      return;
+    }
 
-button {
-  display: inline-block;
-  padding: 10px 20px;
-  font-size: 1rem;
-  margin: 10px 5px;
-  cursor: pointer;
-  border: none;
-  border-radius: 4px;
-  background-color: #333;
-  color: #fff;
-  transition: background-color 0.3s ease;
-}
+    const num1 = parseFloat(firstValue);
+    const num2 = parseFloat(secondValue);
+    let result;
 
-.buttons {
-  display: flex;
-  justify-content: center;
-}
+    switch (operator) {
+      case '+':
+        result = num1 + num2;
+        break;
+      case '-':
+        result = num1 - num2;
+        break;
+      case '*':
+        result = num1 * num2;
+        break;
+      case '/':
+        if (num2 === 0) {
+          display.value = 'Ділення на нуль!';
+          return;
+        }
+        result = num1 / num2;
+        break;
+      default:
+        display.value = 'Помилка!';
+        return;
+    }
 
-button:hover {
-  background-color: #555;
-}
+    display.value = (result % 1 === 0) ? result : result.toFixed(2);
+    firstValue = display.value;
+    operator = '';
+    secondValue = '';
+    historyDisplay.textContent = '';
+  } else if (specialChars.includes(btnValue)) {
+    if (!isNumber(firstValue)) {
+      display.value = 'Помилка!';
+      return;
+    }
+    operator = btnValue;
+    secondValue = '';
+    updateHistory();
+  } else {
+    if (!operator) {
+      firstValue += btnValue;
+      display.value = firstValue;
+    } else {
+      secondValue += btnValue;
+      display.value = secondValue;
+    }
+    updateHistory();
+  }
+};
 
-
-#changeTextButton {
-  background-color: #4CAF50;
-}
-
-#changeTextButton:hover {
-  background-color: #45A049;
-}
-
-#addItemButton {
-  background-color: #2196F3;
-}
-
-#addItemButton:hover {
-  background-color: #0b7dda;
-}
+buttons.forEach(button => {
+  button.addEventListener("click", (e) => calculate(e.target.dataset.value));
+});
